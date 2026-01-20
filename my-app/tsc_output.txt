@@ -1,0 +1,11 @@
+src/app/profile/page.tsx(17,34): error TS2345: Argument of type '() => Promise<typeof import("C:/Users/HP/programming/web development/PROJECTS/notes_frontend/Demo/my-app/node_modules/react-activity-calendar/build/index")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+  Type '() => Promise<typeof import("C:/Users/HP/programming/web development/PROJECTS/notes_frontend/Demo/my-app/node_modules/react-activity-calendar/build/index")>' is not assignable to type '() => LoaderComponent<{}>'.
+    Type 'Promise<typeof import("C:/Users/HP/programming/web development/PROJECTS/notes_frontend/Demo/my-app/node_modules/react-activity-calendar/build/index")>' is not assignable to type 'LoaderComponent<{}>'.
+      Type 'typeof import("C:/Users/HP/programming/web development/PROJECTS/notes_frontend/Demo/my-app/node_modules/react-activity-calendar/build/index")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+src/app/profile/page.tsx(142,25): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: {}, context?: any): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<...> | Component<...> | null | undefined', gave the following error.
+    Type '{ data: Activity[]; theme: { light: string[]; dark: string[]; }; labels: { legend: { less: string; more: string; }; }; showWeekdayLabels: true; renderBlock: (block: any, activity: any) => Element; }' is not assignable to type 'IntrinsicAttributes'.
+      Property 'data' does not exist on type 'IntrinsicAttributes'.
+  Overload 2 of 2, '(props: {}): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<...> | Component<...> | null | undefined', gave the following error.
+    Type '{ data: Activity[]; theme: { light: string[]; dark: string[]; }; labels: { legend: { less: string; more: string; }; }; showWeekdayLabels: true; renderBlock: (block: any, activity: any) => Element; }' is not assignable to type 'IntrinsicAttributes'.
+      Property 'data' does not exist on type 'IntrinsicAttributes'.

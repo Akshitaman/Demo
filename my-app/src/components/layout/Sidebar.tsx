@@ -24,6 +24,21 @@ export function Sidebar() {
     const params = useParams();
     const activeNoteId = params?.id as string;
 
+    // Auto-collapse on mobile
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setIsCollapsed(true);
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // Get active note content for AI context
     const { note: activeNote } = useNote(activeNoteId || '');
 
@@ -136,7 +151,10 @@ export function Sidebar() {
                 </div>
 
                 {/* User / Engagement */}
-                <div className="p-4 border-t border-border">
+                <div 
+                    className="p-4 border-t border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => router.push('/profile')}
+                >
                     {!isCollapsed ? (
                         <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
