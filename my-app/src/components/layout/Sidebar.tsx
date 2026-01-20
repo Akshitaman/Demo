@@ -4,35 +4,20 @@ import React, { useState, useEffect } from 'react';
 import {
     FileText,
     Settings,
-    Brain,
-    MessageSquare,
-    BarChart,
     Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useNotes } from '@/hooks/useNotes';
-import { useNote } from '@/hooks/useNote';
 import { useRouter, useParams } from 'next/navigation';
-import { AISidebarPanel, AIToolType } from '@/components/ai/AISidebarPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [activeAITool, setActiveAITool] = useState<AIToolType>(null);
     const { notes, createNote } = useNotes();
     const router = useRouter();
     const params = useParams();
     const activeNoteId = params?.id as string;
-
-    // Get active note content for AI context
-    const { note: activeNote } = useNote(activeNoteId || '');
-
-    // Get raw text content from the note for AI processing
-    const getNoteContent = () => {
-        if (!activeNote) return "";
-        return activeNote.cells.map(c => c.content).join('\n\n');
-    };
 
     const handleCreateNote = async () => {
         const newNote = await createNote();
@@ -43,20 +28,7 @@ export function Sidebar() {
         router.push(`/notes/${id}`);
     };
 
-    const toggleAITool = (tool: AIToolType) => {
-        if (activeAITool === tool) {
-            setActiveAITool(null);
-        } else {
-            setActiveAITool(tool);
-        }
-    };
 
-    // Close AI panel when navigating to a different note (optional, but good for context)
-    useEffect(() => {
-        if (activeAITool && !activeNoteId) {
-            setActiveAITool(null);
-        }
-    }, [activeNoteId, activeAITool]);
 
     const sidebarVariants = {
         collapsed: { width: "4rem" },
@@ -146,40 +118,7 @@ export function Sidebar() {
                         </nav>
                     </div>
 
-                    <div className="px-3 mt-6">
-                        {!isCollapsed && (
-                            <motion.p
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="text-xs font-semibold text-muted-foreground mb-2 px-2 whitespace-nowrap"
-                            >
-                                AI TOOLS
-                            </motion.p>
-                        )}
-                        <nav className="space-y-1">
-                            <SidebarItem
-                                icon={Brain}
-                                label="Summarize"
-                                isCollapsed={isCollapsed}
-                                isActive={activeAITool === 'summarize'}
-                                onClick={() => toggleAITool('summarize')}
-                            />
-                            <SidebarItem
-                                icon={MessageSquare}
-                                label="Chat"
-                                isCollapsed={isCollapsed}
-                                isActive={activeAITool === 'chat'}
-                                onClick={() => toggleAITool('chat')}
-                            />
-                            <SidebarItem
-                                icon={BarChart}
-                                label="Quiz"
-                                isCollapsed={isCollapsed}
-                                isActive={activeAITool === 'quiz'}
-                                onClick={() => toggleAITool('quiz')}
-                            />
-                        </nav>
-                    </div>
+
                 </div>
 
                 {/* User / Engagement */}
@@ -210,17 +149,7 @@ export function Sidebar() {
                 </div>
             </motion.aside>
 
-            {/* AI Panel - Renders outside the aside but visually connected */}
-            <AnimatePresence>
-                {activeAITool && (
-                    <AISidebarPanel
-                        isOpen={true}
-                        activeTool={activeAITool}
-                        onClose={() => setActiveAITool(null)}
-                        noteContent={getNoteContent()}
-                    />
-                )}
-            </AnimatePresence>
+
         </div>
     );
 }

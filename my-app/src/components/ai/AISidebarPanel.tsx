@@ -54,8 +54,7 @@ export function AISidebarPanel({ isOpen, activeTool, onClose, noteContent }: AIS
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute top-0 right-[-320px] w-[320px] h-full bg-background border-l shadow-2xl z-50 flex flex-col"
-            style={{ right: 0 }} // Override the right-[-320px] from previous css class if needed, or just remove it from className
+            className="w-[350px] border-l bg-background flex flex-col h-full shrink-0 shadow-sm"
         >
             <div className="p-4 border-b flex items-center justify-between bg-muted/30">
                 <h3 className="font-semibold text-sm">{getTitle()}</h3>

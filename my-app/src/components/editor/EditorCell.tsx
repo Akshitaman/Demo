@@ -17,10 +17,11 @@ interface EditorCellProps {
     cell: Cell;
     onChange: (content: string) => void;
     onDelete: () => void;
+    onSelect?: () => void;
     isActive?: boolean;
 }
 
-export function EditorCell({ cell, onChange, onDelete, isActive }: EditorCellProps) {
+export function EditorCell({ cell, onChange, onDelete, onSelect, isActive }: EditorCellProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [lintErrors, setLintErrors] = useState<LintError[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -61,14 +62,30 @@ export function EditorCell({ cell, onChange, onDelete, isActive }: EditorCellPro
         }
     }, [cell.content, isEditing]);
 
+    const handleFocus = () => {
+        setIsEditing(true);
+        if (onSelect) onSelect();
+    };
+
     return (
         <div
             ref={setNodeRef}
             style={style}
+            role="button"
+            tabIndex={0}
+            onClick={() => {
+                if (onSelect) onSelect();
+            }}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                    if (onSelect) onSelect();
+                    setIsEditing(true);
+                }
+            }}
             className={cn(
-                "group relative mb-4 rounded-lg border border-transparent bg-card transition-all hover:border-border hover:shadow-sm",
-                isActive && "border-primary ring-1 ring-primary",
-                isEditing && "border-border shadow-md"
+                "group relative mb-4 rounded-lg border border-transparent bg-card transition-all hover:border-border hover:shadow-sm outline-none",
+                isActive && "border-primary shadow-[0_0_15px_-3px_rgba(99,102,241,0.4)] dark:shadow-[0_0_20px_-5px_rgba(129,140,248,0.5)] ring-1 ring-primary/20",
+                isEditing && "border-primary ring-1 ring-primary shadow-md"
             )}
         >
             {/* Drag Handle & Actions - Visible on Hover/Focus */}
@@ -83,8 +100,11 @@ export function EditorCell({ cell, onChange, onDelete, isActive }: EditorCellPro
 
             {/* Content Area */}
             <div
-                className="min-h-12 p-4 w-full"
-                onClick={() => setIsEditing(true)}
+                className="min-h-12 p-4 w-full cursor-text"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleFocus();
+                }}
             >
                 {isEditing ? (
                     <div className="space-y-2">
