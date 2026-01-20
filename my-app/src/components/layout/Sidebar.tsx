@@ -1,13 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTheme } from "next-themes";
 import {
     FileText,
     Settings,
     Brain,
     MessageSquare,
     BarChart,
-    Plus
+    Plus,
+    X,
+    Moon,
+    Sun,
+    Monitor
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,11 +23,13 @@ import { AISidebarPanel, AIToolType } from '@/components/ai/AISidebarPanel';
 
 export function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeAITool, setActiveAITool] = useState<AIToolType>(null);
     const { notes, createNote } = useNotes();
     const router = useRouter();
     const params = useParams();
     const activeNoteId = params?.id as string;
+    const { theme, setTheme } = useTheme();
 
     // Auto-collapse on mobile
     useEffect(() => {
@@ -152,30 +159,95 @@ export function Sidebar() {
 
                 {/* User / Engagement */}
                 <div 
-                    className="p-4 border-t border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => router.push('/profile')}
+                    className="p-4 border-t border-border"
                 >
-                    {!isCollapsed ? (
-                        <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-                                U
-                            </div>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="text-sm font-medium truncate">User</p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                    🔥 5 Day Streak
-                                </p>
-                            </div>
-                            <Settings className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
-                        </div>
-                    ) : (
-                        <div className="flex justify-center flex-col items-center gap-4">
+                    <div 
+                        className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors p-2 rounded-md"
+                        onClick={() => router.push('/profile')}
+                    >
+                        {!isCollapsed ? (
+                            <>
+                                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
+                                    U
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <p className="text-sm font-medium truncate">User</p>
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                        🔥 5 Day Streak
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
                             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">U</div>
-                            <Settings className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
-                        </div>
-                    )}
+                        )}
+                    </div>
+                    
+                    <div className="mt-2 pt-2 border-t border-border flex justify-end">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => setIsSettingsOpen(true)}
+                            title="Settings"
+                        >
+                            <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                        </Button>
+                    </div>
                 </div>
             </aside>
+
+            {/* Settings Modal */}
+            {isSettingsOpen && (
+                <div 
+                    className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setIsSettingsOpen(false)}
+                >
+                    <div 
+                        className="bg-card border border-border rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-4 border-b border-border flex items-center justify-between">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <Settings className="h-4 w-4" />
+                                Settings
+                            </h3>
+                            <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(false)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        
+                        <div className="p-6 space-y-6">
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Appearance</h4>
+                                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-primary/10 text-primary rounded-md">
+                                            {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">Theme</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {theme === 'dark' ? 'Dark mode is active' : 'Light mode is active'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                                    >
+                                        Switch to {theme === 'dark' ? 'Light' : 'Dark'}
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            <div className="pt-2 text-center text-xs text-muted-foreground">
+                                <p>Version 0.1.0 • Built with Next.js 16</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* AI Panel - Renders outside the aside but visually connected */}
             <AISidebarPanel
