@@ -83,7 +83,7 @@ export function EditorCell({ cell, onChange, onDelete, isActive }: EditorCellPro
 
             {/* Content Area */}
             <div
-                className="min-h-[3rem] p-4 w-full"
+                className="min-h-12 p-4 w-full"
                 onClick={() => setIsEditing(true)}
             >
                 {isEditing ? (

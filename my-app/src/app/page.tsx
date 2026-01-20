@@ -55,7 +55,7 @@ export default function Home() {
           <motion.div
             variants={item}
             onClick={handleCreateNote}
-            className="aspect-[3/4] rounded-lg border-2 border-dashed border-muted-foreground/20 hover:border-primary hover:bg-primary/5 cursor-pointer flex flex-col items-center justify-center text-muted-foreground transition-all group"
+            className="aspect-3/4 rounded-lg border-2 border-dashed border-muted-foreground/20 hover:border-primary hover:bg-primary/5 cursor-pointer flex flex-col items-center justify-center text-muted-foreground transition-all group"
           >
             <div className="h-12 w-12 rounded-full bg-muted group-hover:bg-primary/20 flex items-center justify-center mb-4 transition-colors">
               <Plus className="h-6 w-6 group-hover:text-primary transition-colors" />
@@ -68,11 +68,11 @@ export default function Home() {
               variants={item}
               key={note.id}
               onClick={() => handleOpenNote(note.id)}
-              className="aspect-[3/4] rounded-lg border bg-card p-4 hover:shadow-md transition-all cursor-pointer relative group flex flex-col"
+              className="aspect-3/4 rounded-lg border bg-card p-4 hover:shadow-md transition-all cursor-pointer relative group flex flex-col"
             >
               <div className="flex-1 overflow-hidden relative">
                 {/* Preview: shows first cell content roughly */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card/90" />
+                <div className="absolute inset-0 bg-linear-to-b from-transparent to-card/90" />
                 <p className="text-xs text-muted-foreground line-clamp-6 opacity-50 whitespace-pre-wrap">
                   {note.cells?.[0]?.content || "No content"}
                 </p>
