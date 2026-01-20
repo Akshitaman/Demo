@@ -9,15 +9,31 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useNotes } from '@/hooks/useNotes';
-import { useRouter, useParams } from 'next/navigation';
+import { useFolders } from '@/hooks/useFolders';
+import { useNote } from '@/hooks/useNote';
+import { Cell, Folder, Note } from '@/store/types';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Folder as FolderIcon, MoreVertical, Copy, Clipboard, Trash2, FolderPlus, Clock } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const { notes, createNote } = useNotes();
+    const { createNote, copyNote, deleteNote } = useNotes();
+    const { folders, createFolder, deleteFolder, updateFolder } = useFolders();
+    const searchParams = useSearchParams();
+
     const router = useRouter();
     const params = useParams();
     const activeNoteId = params?.id as string;
+    const [noteClipboard, setNoteClipboard] = useState<Note | null>(null);
+
 
     // Auto-collapse on mobile
     useEffect(() => {
@@ -27,12 +43,11 @@ export function Sidebar() {
             }
         };
 
-        // Initial check
         handleResize();
-
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
 
     // Get active note content for AI context
     const { note: activeNote } = useNote(activeNoteId || '');
@@ -40,17 +55,9 @@ export function Sidebar() {
     // Get raw text content from the note for AI processing
     const getNoteContent = () => {
         if (!activeNote) return "";
-        return activeNote.cells.map(c => c.content).join('\n\n');
+        return activeNote.cells.map((c: Cell) => c.content).join('\n\n');
     };
 
-    const handleCreateNote = async () => {
-        const newNote = await createNote();
-        router.push(`/notes/${newNote.id}`);
-    };
-
-    const handleOpenNote = (id: string) => {
-        router.push(`/notes/${id}`);
-    };
 
 
 
@@ -66,7 +73,7 @@ export function Sidebar() {
                 animate={isCollapsed ? "collapsed" : "expanded"}
                 variants={sidebarVariants}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="h-full bg-muted/30 border-r border-border flex flex-col z-20 bg-background overflow-hidden"
+                className="h-full bg-background/60 backdrop-blur-xl border-r border-border flex flex-col z-20 overflow-hidden"
             >
                 {/* Header */}
                 <div className="p-4 border-b border-border flex items-center justify-between shrink-0 h-16">
@@ -88,93 +95,78 @@ export function Sidebar() {
                 </div>
 
                 {/* Navigation */}
-                <div className="flex-1 overflow-y-auto py-4 scrollbar-thin">
-                    <div className="px-3 mb-2">
-                        <div className="flex items-center justify-between px-2 mb-2 h-8">
-                            {!isCollapsed && (
-                                <motion.p
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="text-xs font-semibold text-muted-foreground whitespace-nowrap"
-                                >
-                                    FILES
-                                </motion.p>
+                <div className="flex-1 overflow-y-auto py-4 space-y-2">
+                    <Link href="/">
+                        <Button
+                            variant={!searchParams.get('folder') && !searchParams.get('view') ? "secondary" : "ghost"}
+                            className={cn(
+                                "w-full justify-start h-10 px-4 transition-all duration-200",
+                                isCollapsed ? "justify-center px-0" : "",
+                                !searchParams.get('folder') && !searchParams.get('view') ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground hover:bg-accent/50"
                             )}
-                            {!isCollapsed && (
+                        >
+                            <Clock className={cn("h-5 w-5 shrink-0", !searchParams.get('folder') && !searchParams.get('view') ? "text-primary" : "text-muted-foreground")} />
+                            {!isCollapsed && <span className="ml-3 font-medium">Recent Files</span>}
+                        </Button>
+                    </Link>
+
+                    <div className="group relative">
+                        <Button
+                            variant={searchParams.get('view') === 'folders' || searchParams.get('folder') ? "secondary" : "ghost"}
+                            className={cn(
+                                "w-full justify-start h-10 px-4 transition-all duration-200",
+                                isCollapsed ? "justify-center px-0" : "",
+                                (searchParams.get('view') === 'folders' || searchParams.get('folder')) ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground hover:bg-accent/50"
+                            )}
+                    <div className="group relative">
+                            <Button
+                                variant={searchParams.get('view') === 'folders' || searchParams.get('folder') ? "secondary" : "ghost"}
+                                className={cn(
+                                    "w-full justify-start h-10 px-4 transition-all duration-200",
+                                    isCollapsed ? "justify-center px-0" : "",
+                                    (searchParams.get('view') === 'folders' || searchParams.get('folder')) ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground hover:bg-accent/50"
+                                )}
+                                onClick={() => {
+                                    router.push('/?view=folders');
+                                }}
+                            >
+                                <FolderIcon className={cn("h-5 w-5 shrink-0", (searchParams.get('view') === 'folders' || searchParams.get('folder')) ? "text-primary" : "text-muted-foreground")} />
+                                {!isCollapsed && <span className="ml-3 font-medium">Folders</span>}
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* User / Engagement */}
+                    <div
+                        className="p-4 border-t border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => router.push('/profile')}
+                    >
+                        <div className="p-4 border-t border-border shrink-0">
+                            {!isCollapsed ? (
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
+                                    className="flex items-center gap-3"
                                 >
-                                    <Button variant="ghost" size="icon" className="h-4 w-4" onClick={handleCreateNote}>
-                                        <Plus className="h-3 w-3" />
-                                    </Button>
+                                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
+                                        U
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="text-sm font-medium truncate">User</p>
+                                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                            🔥 5 Day Streak
+                                        </p>
+                                    </div>
+                                    <Settings className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground shrink-0" />
                                 </motion.div>
-                            )}
-                        </div>
-
-                        <nav className="space-y-1">
-                            {/* Notes List */}
-                            {notes.map(note => (
-                                <div
-                                    key={note.id}
-                                    onClick={() => handleOpenNote(note.id)}
-                                    className={cn(
-                                        "flex items-center gap-2 px-2 py-1.5 text-sm rounded-md cursor-pointer group truncate transition-colors h-9",
-                                        activeNoteId === note.id ? "bg-accent text-accent-foreground font-medium" : "text-foreground hover:bg-accent/50"
-                                    )}
-                                    title={note.title}
-                                >
-                                    <FileText className={cn("h-4 w-4 shrink-0", activeNoteId === note.id ? "text-primary" : "text-muted-foreground")} />
-                                    {!isCollapsed && (
-                                        <motion.span
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            className="truncate"
-                                        >
-                                            {note.title || "Untitled"}
-                                        </motion.span>
-                                    )}
+                            ) : (
+                                <div className="flex justify-center flex-col items-center gap-4">
+                                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">U</div>
+                                    <Settings className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
                                 </div>
-                            ))}
-                            {notes.length === 0 && !isCollapsed && (
-                                <div className="px-2 py-2 text-xs text-muted-foreground italic whitespace-nowrap">No notes yet.</div>
                             )}
-                        </nav>
-                    </div>
-
-
-                </div>
-
-                {/* User / Engagement */}
-                <div 
-                    className="p-4 border-t border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => router.push('/profile')}
-                >
-                <div className="p-4 border-t border-border shrink-0">
-                    {!isCollapsed ? (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="flex items-center gap-3"
-                        >
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
-                                U
-                            </div>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="text-sm font-medium truncate">User</p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                    🔥 5 Day Streak
-                                </p>
-                            </div>
-                            <Settings className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground shrink-0" />
-                        </motion.div>
-                    ) : (
-                        <div className="flex justify-center flex-col items-center gap-4">
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">U</div>
-                            <Settings className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
                         </div>
-                    )}
-                </div>
+                    </div>
             </motion.aside>
 
 

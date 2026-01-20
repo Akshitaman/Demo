@@ -23,6 +23,10 @@ export function useFolders() {
 
     useEffect(() => {
         fetchFolders();
+
+        const handleUpdate = () => fetchFolders();
+        window.addEventListener('app:folders-updated', handleUpdate);
+        return () => window.removeEventListener('app:folders-updated', handleUpdate);
     }, [fetchFolders]);
 
     const createFolder = async (name: string, parentId: string | null = null) => {
@@ -34,13 +38,28 @@ export function useFolders() {
         };
         await db.folders.put(newFolder);
         await fetchFolders();
+        window.dispatchEvent(new CustomEvent('app:folders-updated'));
         return newFolder;
+    };
+
+    const deleteFolder = async (id: string) => {
+        await db.folders.delete(id);
+        await fetchFolders();
+        window.dispatchEvent(new CustomEvent('app:folders-updated'));
+    };
+
+    const updateFolder = async (folder: Folder) => {
+        await db.folders.put(folder);
+        await fetchFolders();
+        window.dispatchEvent(new CustomEvent('app:folders-updated'));
     };
 
     return {
         folders,
         loading,
         createFolder,
+        deleteFolder,
+        updateFolder,
         refresh: fetchFolders
     };
 }
