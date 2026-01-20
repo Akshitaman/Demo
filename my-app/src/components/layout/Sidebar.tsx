@@ -19,6 +19,30 @@ export function Sidebar() {
     const params = useParams();
     const activeNoteId = params?.id as string;
 
+    // Auto-collapse on mobile
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setIsCollapsed(true);
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Get active note content for AI context
+    const { note: activeNote } = useNote(activeNoteId || '');
+
+    // Get raw text content from the note for AI processing
+    const getNoteContent = () => {
+        if (!activeNote) return "";
+        return activeNote.cells.map(c => c.content).join('\n\n');
+    };
+
     const handleCreateNote = async () => {
         const newNote = await createNote();
         router.push(`/notes/${newNote.id}`);
@@ -122,6 +146,10 @@ export function Sidebar() {
                 </div>
 
                 {/* User / Engagement */}
+                <div 
+                    className="p-4 border-t border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => router.push('/profile')}
+                >
                 <div className="p-4 border-t border-border shrink-0">
                     {!isCollapsed ? (
                         <motion.div
