@@ -1,12 +1,17 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import { useState } from 'react';
 import { useNote } from '@/hooks/useNote';
 import { EditorCanvas } from '@/components/editor/EditorCanvas';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Brain, MessageSquare, BarChart, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AISidebarPanel, AIToolType } from '@/components/ai/AISidebarPanel';
+import { AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 export function NoteEditor({ id }: { id: string }) {
     const { note, loading, saveNote } = useNote(id);
+    const [activeTool, setActiveTool] = useState<AIToolType>(null); // Default to closed
 
     if (loading) {
         return (
@@ -25,9 +30,89 @@ export function NoteEditor({ id }: { id: string }) {
         );
     }
 
+    const noteContent = note.cells.map(c => c.content).join('\n\n');
+
+    const toggleTool = (tool: AIToolType) => {
+        if (activeTool === tool) {
+            setActiveTool(null);
+        } else {
+            setActiveTool(tool);
+        }
+    };
+
     return (
-        <div className="h-full overflow-y-auto">
-            <EditorCanvas note={note} onUpdate={saveNote} />
+        <div className="flex flex-col h-full overflow-hidden">
+            {/* Top Bar */}
+            <div className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0 z-10">
+                <div className="font-medium truncate max-w-md" title={note.title}>
+                    {note.title || "Untitled Note"}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center bg-muted/50 rounded-lg p-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleTool('chat')}
+                            className={cn("h-8 gap-2", activeTool === 'chat' && "bg-background shadow-sm text-primary")}
+                        >
+                            <MessageSquare className="h-4 w-4" />
+                            <span className="hidden sm:inline">Chat</span>
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleTool('summarize')}
+                            className={cn("h-8 gap-2", activeTool === 'summarize' && "bg-background shadow-sm text-primary")}
+                        >
+                            <Brain className="h-4 w-4" />
+                            <span className="hidden sm:inline">Summarize</span>
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleTool('quiz')}
+                            className={cn("h-8 gap-2", activeTool === 'quiz' && "bg-background shadow-sm text-primary")}
+                        >
+                            <BarChart className="h-4 w-4" />
+                            <span className="hidden sm:inline">Quiz</span>
+                        </Button>
+                    </div>
+
+                    <div className="w-px h-6 bg-border mx-1" />
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setActiveTool(activeTool ? null : 'chat')}
+                        title={activeTool ? "Close AI Panel" : "Open AI Panel"}
+                    >
+                        {activeTool ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+                    </Button>
+                </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex-1 flex overflow-hidden relative">
+                {/* Editor Area */}
+                <div className="flex-1 overflow-y-auto min-w-0">
+                    <div className="max-w-4xl mx-auto h-full">
+                        <EditorCanvas note={note} onUpdate={saveNote} />
+                    </div>
+                </div>
+
+                {/* Right Panel - AI Assistant */}
+                <AnimatePresence mode="wait">
+                    {activeTool && (
+                        <AISidebarPanel
+                            isOpen={true}
+                            activeTool={activeTool}
+                            onClose={() => setActiveTool(null)}
+                            noteContent={noteContent}
+                        />
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }
