@@ -3,13 +3,16 @@
 import { useState } from 'react';
 import { useNote } from '@/hooks/useNote';
 import { EditorCanvas } from '@/components/editor/EditorCanvas';
-import { Loader2, Brain, MessageSquare, BarChart, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Loader2, Brain, MessageSquare, BarChart, PanelRightClose, PanelRightOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AISidebarPanel, AIToolType } from '@/components/ai/AISidebarPanel';
 import { AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+import { useRouter } from 'next/navigation';
+
 export function NoteEditor({ id }: { id: string }) {
+    const router = useRouter();
     const { note, loading, saveNote } = useNote(id);
     const [activeTool, setActiveTool] = useState<AIToolType>(null); // Default to closed
 
@@ -43,42 +46,22 @@ export function NoteEditor({ id }: { id: string }) {
     return (
         <div className="flex flex-col h-full overflow-hidden bg-transparent">
             {/* Top Bar */}
-            <div className="h-14 border-b flex items-center justify-between px-4 bg-background/40 backdrop-blur-md shrink-0 z-10">
-                <div className="font-medium truncate max-w-md" title={note.title}>
-                    {note.title || "Untitled Note"}
+            <div className="h-14 border-b flex items-center justify-between px-4 bg-background/40 backdrop-blur-md shrink-0 z-10 transition-all">
+                <div className="flex items-center gap-4">
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => router.push('/')} 
+                        className="h-9 w-9 -ml-2 text-muted-foreground hover:text-foreground"
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div className="font-semibold text-lg truncate max-w-md transition-[padding]" title={note.title}>
+                        {note.title || "Untitled Note"}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-muted/50 rounded-lg p-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleTool('chat')}
-                            className={cn("h-8 gap-2", activeTool === 'chat' && "bg-background shadow-sm text-primary")}
-                        >
-                            <MessageSquare className="h-4 w-4" />
-                            <span className="hidden sm:inline">Chat</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleTool('summarize')}
-                            className={cn("h-8 gap-2", activeTool === 'summarize' && "bg-background shadow-sm text-primary")}
-                        >
-                            <Brain className="h-4 w-4" />
-                            <span className="hidden sm:inline">Summarize</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleTool('quiz')}
-                            className={cn("h-8 gap-2", activeTool === 'quiz' && "bg-background shadow-sm text-primary")}
-                        >
-                            <BarChart className="h-4 w-4" />
-                            <span className="hidden sm:inline">Quiz</span>
-                        </Button>
-                    </div>
-
                     <div className="w-px h-6 bg-border mx-1" />
 
                     <Button
@@ -86,8 +69,9 @@ export function NoteEditor({ id }: { id: string }) {
                         size="icon"
                         onClick={() => setActiveTool(activeTool ? null : 'chat')}
                         title={activeTool ? "Close AI Panel" : "Open AI Panel"}
+                        className={cn("transition-transform duration-200", activeTool && "rotate-180")}
                     >
-                        {activeTool ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+                        <PanelRightOpen className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
@@ -108,6 +92,7 @@ export function NoteEditor({ id }: { id: string }) {
                             isOpen={true}
                             activeTool={activeTool}
                             onClose={() => setActiveTool(null)}
+                            onToolChange={setActiveTool}
                             noteContent={noteContent}
                         />
                     )}
