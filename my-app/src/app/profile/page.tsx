@@ -79,7 +79,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 relative animate-in fade-in duration-500">
+        <div className="p-4 pt-16 md:p-8 md:pt-8 max-w-5xl mx-auto space-y-8 relative animate-in fade-in duration-500">
             
             {/* User Info Card */}
             <div className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">

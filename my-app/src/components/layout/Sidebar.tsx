@@ -24,7 +24,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AISidebarPanel, AIToolType } from '@/components/ai/AISidebarPanel';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Folder as FolderIcon, MoreVertical, Copy, Clipboard, Trash2, FolderPlus, Clock } from 'lucide-react';
+import { Folder as FolderIcon, MoreVertical, Copy, Clipboard, Trash2, FolderPlus, Clock, Menu } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 function SidebarContent() {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeAITool, setActiveAITool] = useState<AIToolType>(null);
@@ -49,15 +50,17 @@ function SidebarContent() {
     const activeNoteId = params?.id as string;
     const [noteClipboard, setNoteClipboard] = useState<Note | null>(null);
 
-    // Auto-collapse on mobile
+    // Auto-collapse on mobile - Handle initial state
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth < 768) {
-                setIsCollapsed(true);
+                setIsCollapsed(true); // Default to collapsed on mobile (which means hidden in new logic)
+            } else {
+                setIsMobileMenuOpen(false); // Reset mobile state on desktop
             }
         };
 
-        handleResize();
+        handleResize(); // Init
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -78,38 +81,86 @@ function SidebarContent() {
             setActiveAITool(null);
         } else {
             setActiveAITool(tool);
+            // On mobile, if we open AI tool, we might want to close the sidebar or keep it?
+            // Let's keep it simple for now.
         }
     };
 
     const handleOpenNote = (noteId: string) => {
-        router.push(`/note/${noteId}`);
+        // Fix: Route correctly to /notes/ instead of /note/
+        router.push(`/notes/${noteId}`);
+        // On mobile, close sidebar after navigation
+        if (window.innerWidth < 768) {
+            setIsMobileMenuOpen(false);
+        }
     };
 
-    // Close AI panel when navigating to a different note (optional, but good for context)
-    useEffect(() => {
-        if (activeAITool && !activeNoteId) {
-            setActiveAITool(null);
-        }
-    }, [activeNoteId, activeAITool]);
+    // Removed auto-close useEffect to allow AI tools to stay open even if no note is selected initially (though they need content).
+    // Can render a placeholder in the panel if no note is selected.
 
     const sidebarVariants = {
         collapsed: { width: "4rem" },
-        expanded: { width: "16rem" }
+        expanded: { width: "16rem" },
+        mobileOpen: { x: 0, width: "16rem" },
+        mobileClosed: { x: "-100%", width: "16rem" }
     };
+    
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
     return (
-        <div className="relative flex h-screen z-40 bg-background">
+        <>
+            {/* Mobile Toggle Button (Visible only on mobile when sidebar is closed) */}
+            <div className="md:hidden fixed top-3 left-3 z-50">
+                {!isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                    >
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setIsMobileMenuOpen(true)} 
+                            className="bg-background/80 backdrop-blur-md shadow-sm border border-border h-10 w-10 rounded-full text-foreground/80 hover:text-foreground"
+                        >
+                             <Menu className="h-5 w-5" />
+                        </Button>
+                    </motion.div>
+                )}
+            </div>
+
+            {/* Mobile Backdrop */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+                    />
+                )}
+            </AnimatePresence>
+
             <motion.aside
                 initial={false}
-                animate={isCollapsed ? "collapsed" : "expanded"}
+                animate={isMobile ? (isMobileMenuOpen ? "mobileOpen" : "mobileClosed") : (isCollapsed ? "collapsed" : "expanded")}
                 variants={sidebarVariants}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="h-full bg-background/60 backdrop-blur-xl border-r border-border flex flex-col z-20 overflow-hidden"
+                // Swift spring transition
+                transition={{ type: "spring", stiffness: 400, damping: 40, mass: 1 }}
+                className={cn(
+                    "flex flex-col z-50 overflow-hidden bg-background/80 backdrop-blur-xl border-r border-border shadow-2xl",
+                    // Mobile styles: fixed full height
+                    "fixed inset-y-0 left-0 h-full",
+                    // Desktop styles: relative
+                    "md:relative md:translate-x-0 md:shadow-none"
+                )}
             >
                 {/* Header */}
                 <div className="p-4 border-b border-border flex items-center justify-between shrink-0 h-16">
                     <AnimatePresence mode="wait">
-                        {!isCollapsed && (
+                        {(!isCollapsed || isMobile) && (
                             <motion.span
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -120,9 +171,16 @@ function SidebarContent() {
                             </motion.span>
                         )}
                     </AnimatePresence>
-                    <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)} className="shrink-0">
-                        <FileText className="h-5 w-5" />
-                    </Button>
+                    
+                    {isMobile ? (
+                         <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)} className="shrink-0">
+                            <X className="h-5 w-5" />
+                        </Button>
+                    ) : (
+                        <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)} className="shrink-0">
+                            <FileText className="h-5 w-5" />
+                        </Button>
+                    )}
                 </div>
 
                 {/* Navigation */}
@@ -137,12 +195,13 @@ function SidebarContent() {
                                 variant={!searchParams.get('folder') && !searchParams.get('view') ? "secondary" : "ghost"}
                                 className={cn(
                                     "w-full justify-start h-10 px-4 transition-all duration-200",
-                                    isCollapsed ? "justify-center px-0" : "",
+                                    isCollapsed && !isMobile ? "justify-center px-0" : "",
                                     !searchParams.get('folder') && !searchParams.get('view') ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground hover:bg-accent/50"
                                 )}
+                                onClick={() => isMobile && setIsMobileMenuOpen(false)}
                             >
                                 <Clock className={cn("h-5 w-5 shrink-0", !searchParams.get('folder') && !searchParams.get('view') ? "text-primary" : "text-muted-foreground")} />
-                                {!isCollapsed && <span className="ml-3 font-medium">Recent Files</span>}
+                                {(!isCollapsed || isMobile) && <span className="ml-3 font-medium">Recent Files</span>}
                             </Button>
                         </Link>
                     </motion.div>
@@ -160,7 +219,7 @@ function SidebarContent() {
                                 title={note.title}
                             >
                                 <FileText className={cn("h-4 w-4 shrink-0", activeNoteId === note.id ? "text-primary" : "text-muted-foreground")} />
-                                {!isCollapsed && (
+                                {(!isCollapsed || isMobile) && (
                                     <motion.span
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
@@ -171,7 +230,7 @@ function SidebarContent() {
                                 )}
                             </div>
                         ))}
-                        {notes.length === 0 && !isCollapsed && (
+                        {notes.length === 0 && (!isCollapsed || isMobile) && (
                             <div className="px-2 py-2 text-xs text-muted-foreground italic whitespace-nowrap">No notes yet.</div>
                         )}
                     </nav>
@@ -188,22 +247,23 @@ function SidebarContent() {
                                 variant={searchParams.get('view') === 'folders' || searchParams.get('folder') ? "secondary" : "ghost"}
                                 className={cn(
                                     "w-full justify-start h-10 px-4 transition-all duration-200",
-                                    isCollapsed ? "justify-center px-0" : "",
+                                    isCollapsed && !isMobile ? "justify-center px-0" : "",
                                     (searchParams.get('view') === 'folders' || searchParams.get('folder')) ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground hover:bg-accent/50"
                                 )}
                                 onClick={() => {
                                     router.push('/?view=folders');
+                                    if(isMobile) setIsMobileMenuOpen(false);
                                 }}
                             >
                                 <FolderIcon className={cn("h-5 w-5 shrink-0", (searchParams.get('view') === 'folders' || searchParams.get('folder')) ? "text-primary" : "text-muted-foreground")} />
-                                {!isCollapsed && <span className="ml-3 font-medium">Folders</span>}
+                                {(!isCollapsed || isMobile) && <span className="ml-3 font-medium">Folders</span>}
                             </Button>
                         </motion.div>
                     </div>
 
                     {/* AI Tools Section - Restored */}
                     <div className="px-3 mt-6">
-                        {!isCollapsed && (
+                        {(!isCollapsed || isMobile) && (
                             <motion.p
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -216,21 +276,21 @@ function SidebarContent() {
                             <SidebarItem
                                 icon={Brain}
                                 label="Summarize"
-                                isCollapsed={isCollapsed}
+                                isCollapsed={isCollapsed && !isMobile}
                                 isActive={activeAITool === 'summarize'}
                                 onClick={() => toggleAITool('summarize')}
                             />
                             <SidebarItem
                                 icon={MessageSquare}
                                 label="Chat"
-                                isCollapsed={isCollapsed}
+                                isCollapsed={isCollapsed && !isMobile}
                                 isActive={activeAITool === 'chat'}
                                 onClick={() => toggleAITool('chat')}
                             />
                             <SidebarItem
                                 icon={BarChart}
                                 label="Quiz"
-                                isCollapsed={isCollapsed}
+                                isCollapsed={isCollapsed && !isMobile}
                                 isActive={activeAITool === 'quiz'}
                                 onClick={() => toggleAITool('quiz')}
                             />
@@ -250,7 +310,7 @@ function SidebarContent() {
                             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
                                 U
                             </div>
-                            {!isCollapsed && (
+                            {(!isCollapsed || isMobile) && (
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -263,7 +323,7 @@ function SidebarContent() {
                                 </motion.div>
                             )}
                         </div>
-                         {!isCollapsed && (
+                         {(!isCollapsed || isMobile) && (
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -338,7 +398,7 @@ function SidebarContent() {
                 onClose={() => setActiveAITool(null)}
                 noteContent={getNoteContent()}
             />
-        </div>
+        </>
     );
 }
 
