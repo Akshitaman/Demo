@@ -126,12 +126,11 @@ export default function ProfilePage() {
                                 <div>
                                     {isEditing ? (
                                         <div className="flex items-center justify-center md:justify-start gap-2">
-                                            <Button onClick={handleSave} size="sm">Save</Button>
+                                            <Button onClick={handleSave} size="sm" className="bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-all font-medium px-6">Save</Button>
                                             <Button variant="outline" onClick={handleCancel} size="sm">Cancel</Button>
                                         </div>
                                     ) : (
                                         <Button variant="outline" onClick={handleEditToggle} size="sm" className="gap-2 rounded-full">
-                                            <Github className="h-4 w-4" />
                                             Edit Profile
                                         </Button>
                                     )}
