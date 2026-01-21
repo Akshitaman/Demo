@@ -240,41 +240,7 @@ function SidebarContent() {
                         </motion.div>
                     </div>
 
-                    {/* AI Tools Section - Restored */}
-                    <div className="px-3 mt-6">
-                        {(!isCollapsed || isMobile) && (
-                            <motion.p
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="text-xs font-semibold text-muted-foreground mb-2 px-2 whitespace-nowrap"
-                            >
-                                AI TOOLS
-                            </motion.p>
-                        )}
-                        <nav className="space-y-1">
-                            <SidebarItem
-                                icon={Brain}
-                                label="Summarize"
-                                isCollapsed={isCollapsed && !isMobile}
-                                isActive={activeAITool === 'summarize'}
-                                onClick={() => toggleAITool('summarize')}
-                            />
-                            <SidebarItem
-                                icon={MessageSquare}
-                                label="Chat"
-                                isCollapsed={isCollapsed && !isMobile}
-                                isActive={activeAITool === 'chat'}
-                                onClick={() => toggleAITool('chat')}
-                            />
-                            <SidebarItem
-                                icon={BarChart}
-                                label="Quiz"
-                                isCollapsed={isCollapsed && !isMobile}
-                                isActive={activeAITool === 'quiz'}
-                                onClick={() => toggleAITool('quiz')}
-                            />
-                        </nav>
-                    </div>
+                    {/* AI Tools Section Removed as per user request */}
                 </div>
 
                 {/* User / Engagement */}
