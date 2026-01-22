@@ -331,9 +331,9 @@ function HomeContent() {
                      <div className="absolute inset-[-100%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#0000_0%,#3b82f6_50%,#0000_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#0000_0%,#22d3ee_50%,#0000_100%)] opacity-100" />
                     
                      {/* Inner Card Content */}
-                     <div className="relative h-full w-full rounded-2xl bg-white dark:bg-[#0b101b] p-3 md:p-4 flex flex-col gap-3 group-hover:bg-zinc-50 dark:group-hover:bg-[#0b101b]/90 transition-colors"> 
+                     <div className="relative h-full w-full rounded-2xl bg-white dark:bg-[#02040a] p-3 md:p-4 flex flex-col gap-3 group-hover:bg-zinc-50 dark:group-hover:bg-[#02040a]/90 transition-colors"> 
                     
-                      <div className="aspect-4/5 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/5 p-4 relative overflow-hidden flex flex-col items-center justify-center">
+                      <div className="aspect-4/5 rounded-xl bg-transparent p-0 relative overflow-hidden flex flex-col items-center justify-center">
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -352,8 +352,8 @@ function HomeContent() {
                           </DropdownMenu>
                         </div>
 
-                        <div className="p-6 rounded-2xl bg-blue-50 text-blue-500 dark:bg-cyan-500/10 dark:text-cyan-400 group-hover:scale-110 transition-transform duration-300">
-                          <FolderIcon className="h-12 w-12 opacity-80" />
+                        <div className="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                          <FolderIcon className="w-[85%] h-[85%] text-blue-500/80 dark:text-white stroke-[1]" />
                         </div>
                       </div>
                       <div className="text-center px-1">
