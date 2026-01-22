@@ -51,28 +51,30 @@ export function AIChat({ content }: AIChatProps) {
           <h3 className="font-semibold text-sm text-foreground mb-1">Chat Assistant</h3>
           <p className="text-xs">Ask questions about your note or ask for writing tips.</p>
         </div>
-        <div className="relative p-4">
-
+        <div className="p-4">
           <form onSubmit={handleSubmit} className="relative w-full">
-            <div className="relative w-full rounded-lg p-px overflow-hidden">
-              <div className="absolute inset-0 bg-linear-to-r from-transparent via-cyan-500 to-transparent" />
+            <div className="relative w-full bg-[#1e1e1e] rounded-2xl border border-cyan-500 flex items-center px-4 py-2.5 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask something..."
-                className="relative w-full bg-black/90 rounded-lg py-2.5 px-4 pr-10 text-sm text-white placeholder:text-white focus:outline-none transition-colors border-none"
+                placeholder="Ask anything..."
+                className="flex-1 bg-transparent text-sm text-white placeholder:text-white focus:outline-none border-none mr-2 font-sans"
               />
+              <div className="flex items-center gap-3">
+                <button type="button" className="text-zinc-400 hover:text-white transition-colors">
+                  <Mic className="h-5 w-5 stroke-[1.5]" />
+                </button>
+                <Button
+                  size="icon"
+                  type="submit"
+                  disabled={!input.trim() || loading}
+                  className="h-8 w-8 text-white hover:text-zinc-300 hover:bg-white/10 transition-colors bg-transparent border-none shadow-none"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
-            <Button
-              size="icon"
-              type="submit"
-              disabled={!input.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-white hover:text-white/80 z-10"
-              variant="ghost"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
           </form>
         </div>
       </div>
@@ -137,9 +139,9 @@ export function AIChat({ content }: AIChatProps) {
                 size="icon"
                 type="submit"
                 disabled={!input.trim() || loading}
-                className="h-6 w-6 rounded-[2px] bg-red-600 hover:bg-red-500 border-none shadow-none p-0"
+                className="h-8 w-8 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 transition-colors bg-transparent border-none shadow-none"
               >
-                {loading ? <Loader2 className="h-3 w-3 animate-spin text-white" /> : <span className="sr-only">Start</span>}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
           </div>

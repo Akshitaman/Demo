@@ -76,7 +76,7 @@ export function QuizGenerator({ content }: QuizGeneratorProps) {
             Test your knowledge based on the note's content.
           </p>
         </div>
-        <div className="mt-4 pt-4 border-t border-cyan-500/20 flex justify-between gap-2">
+        <div className="mt-auto pt-4 border-t border-cyan-500/20 flex justify-between gap-2">
           <Button className="w-full" onClick={handleGenerate} disabled={!content}>
             Create Quiz
           </Button>
