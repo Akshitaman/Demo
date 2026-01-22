@@ -201,7 +201,7 @@ function SidebarContent() {
                 // Swift spring transition
                 transition={{ type: "spring", stiffness: 300, damping: 30 }} // Slightly gentler spring for sidebar
                 className={cn(
-                    "flex flex-col z-50 overflow-hidden bg-background border-r border-cyan-400/30 shadow-none", // Seamless solid background // Changed border-sky-400/30 to cyan
+                    "flex flex-col z-50 overflow-hidden bg-background border-r border-zinc-200 dark:border-cyan-500/50 shadow-none", // Seamless solid background
                     // Mobile styles: fixed full height
                     "fixed inset-y-0 left-0 h-full",
                     // Desktop styles: relative
@@ -209,7 +209,7 @@ function SidebarContent() {
                 )}
             >
                 {/* Header */}
-                <div className="p-4 border-b border-border flex items-center justify-between shrink-0 h-16">
+                <div className="p-4 border-b border-zinc-200 dark:border-cyan-500/50 flex items-center justify-between shrink-0 h-16">
                     <AnimatePresence mode="popLayout">
                         {(!isCollapsed || isMobile) && (
                             <motion.div
@@ -232,7 +232,7 @@ function SidebarContent() {
                                 {"Klaer Notebook".split("").map((char, index) => (
                                     <motion.span
                                         key={index}
-                                        className={index >= 6 ? "text-cyan-400" : ""} // Changed to text-cyan-400
+                                        className={index >= 6 ? "text-blue-600 dark:text-cyan-400" : ""} // Theme aware color
                                         variants={{
                                             hidden: { opacity: 0, scale: 0.8 },
                                             visible: {
