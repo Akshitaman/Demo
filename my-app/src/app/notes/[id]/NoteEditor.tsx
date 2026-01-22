@@ -9,15 +9,28 @@ import { AISidebarPanel, AIToolType } from '@/components/ai/AISidebarPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useFolders } from '@/hooks/useFolders';
 
 export function NoteEditor({ id }: { id: string }) {
     const router = useRouter();
     const { note, loading, saveNote } = useNote(id);
+    const { folders } = useFolders();
     const [activeTool, setActiveTool] = useState<AIToolType>(null);
     const [sidebarWidth, setSidebarWidth] = useState(400);
     const [isResizing, setIsResizing] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(1);
     const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+
+    const parentFolder = note?.folderId ? folders.find(f => f.id === note.folderId) : null;
+
+    const handleBack = () => {
+        if (note?.folderId) {
+            router.push(`/?folder=${note.folderId}`);
+        } else {
+            router.push('/');
+        }
+    };
 
     const startResizing = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
@@ -84,38 +97,63 @@ export function NoteEditor({ id }: { id: string }) {
     const noteContent = note.cells.map(c => c.content).join('\n\n');
 
     return (
-        <div className="flex flex-col h-full overflow-hidden bg-black select-none">
+        <div className="flex flex-col h-full overflow-hidden bg-[#050505] select-none">
             {/* Top Bar */}
-            <div className="flex-none h-14 border-b border-cyan-500/20 flex items-center justify-between px-4 bg-black z-20">
-                <div className="flex items-center gap-4">
+            <div className="flex-none h-14 border-b border-cyan-500/30 flex items-center justify-between px-6 bg-[#050505]/80 backdrop-blur-xl z-20">
+                <div className="flex items-center gap-6">
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => router.push('/')}
-                        className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-zinc-900"
+                        onClick={handleBack}
+                        className="h-9 w-9 text-cyan-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-full transition-all"
                     >
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <div className="font-semibold text-lg text-white truncate max-w-md" title={note.title}>
-                        {note.title || "Untitled Note"}
-                    </div>
+
+                    {/* Breadcrumbs */}
+                    <nav className="flex items-center gap-2 text-sm font-medium">
+                        <button
+                            onClick={() => router.push('/')}
+                            className="text-zinc-500 hover:text-cyan-400 transition-colors"
+                        >
+                            Home
+                        </button>
+                        <span className="text-zinc-700">/</span>
+                        {parentFolder && (
+                            <>
+                                <button
+                                    onClick={() => router.push(`/?folder=${parentFolder.id}`)}
+                                    className="text-zinc-500 hover:text-cyan-400 transition-colors truncate max-w-[150px]"
+                                >
+                                    {parentFolder.name}
+                                </button>
+                                <span className="text-zinc-700">/</span>
+                            </>
+                        )}
+                        <span className="text-white drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] truncate max-w-[200px]">
+                            {note.title || "Untitled Note"}
+                        </span>
+                    </nav>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     <Button
                         variant="ghost"
                         onClick={() => setActiveTool(activeTool ? null : 'chat')}
-                        className={cn("text-zinc-400 hover:text-white hover:bg-zinc-900 gap-2", activeTool && "bg-zinc-900 text-white")}
+                        className={cn(
+                            "text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/5 gap-2 px-4 rounded-full transition-all border border-transparent",
+                            activeTool && "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                        )}
                     >
                         <PanelRightOpen className={cn("h-4 w-4 transition-transform", activeTool && "rotate-180")} />
-                        {activeTool ? "Close AI" : "Open AI"}
+                        <span className="hidden sm:inline">{activeTool ? "Close AI" : "Open AI"}</span>
                     </Button>
                 </div>
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex overflow-hidden relative">
+            <div className="flex-1 flex overflow-hidden relative w-full">
                 {/* Editor Area with Status Bar */}
-                <div className="flex-1 flex flex-col min-w-0 bg-black relative">
+                <div className="flex-1 flex flex-col min-w-0 w-full bg-[#050505] relative transition-all duration-300">
                     <div className="flex-1 overflow-y-auto scrollbar-none">
                         {/* Correctly passing zoomLevel and onCursorMove */}
                         <EditorCanvas
@@ -127,7 +165,7 @@ export function NoteEditor({ id }: { id: string }) {
                     </div>
 
                     {/* Status Bar */}
-                    <div className="h-10 bg-black border-t border-cyan-500/20 flex items-center justify-end px-4 text-xs shrink-0 select-none z-30 gap-6">
+                    <div className="h-10 bg-[#050505] border-t border-cyan-500/20 flex items-center justify-end px-4 text-xs shrink-0 select-none z-30 gap-6">
                         {/* Zoom Controls (First) */}
                         <div className="flex items-center gap-3">
                             <motion.button
@@ -168,7 +206,7 @@ export function NoteEditor({ id }: { id: string }) {
                             />
                             <div
                                 style={{ width: sidebarWidth }}
-                                className="hidden md:flex flex-col border-l border-zinc-800 bg-black h-full shrink-0"
+                                className="hidden md:flex flex-col border-l border-zinc-800 bg-[#050505] h-full shrink-0"
                             >
                                 <AISidebarPanel
                                     isOpen={true}
@@ -178,7 +216,7 @@ export function NoteEditor({ id }: { id: string }) {
                                     noteContent={noteContent}
                                 />
                             </div>
-                            <div className="md:hidden absolute inset-0 z-50 bg-black">
+                            <div className="md:hidden absolute inset-0 z-50 bg-[#050505]">
                                 <AISidebarPanel
                                     isOpen={true}
                                     activeTool={activeTool}

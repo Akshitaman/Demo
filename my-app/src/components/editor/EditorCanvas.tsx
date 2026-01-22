@@ -66,45 +66,59 @@ export function EditorCanvas({ note, onUpdate, zoomLevel, onCursorMove }: Editor
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-black text-white">
+        <div className="flex flex-col h-full w-full bg-[#050505] text-white relative overflow-hidden transition-all duration-300">
+            {/* Starfield Background */}
+            <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(1px_1px_at_20px_30px,#fff,transparent),radial-gradient(1.5px_1.5px_at_40px_70px,#fff,transparent),radial-gradient(2px_2px_at_50px_160px,#fff,transparent),radial-gradient(1px_1px_at_80px_120px,#fff,transparent),radial-gradient(1.5px_1.5px_at_110px_190px,#fff,transparent)] bg-size-[200px_200px]" />
+                <div className="absolute inset-0 bg-linear-to-b from-transparent via-cyan-950/5 to-transparent" />
+            </div>
             {/* Toolbar - Floating */}
             {/* Toolbar - Floating */}
-            <div className="flex items-center justify-center px-4 py-3 bg-black/90 backdrop-blur-sm gap-4 shrink-0 transition-all border-b border-cyan-500/20 sticky top-0 z-40">
-                <div className="relative group rounded-full p-px overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.15)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] transition-shadow duration-500">
-                    <div className="absolute inset-0 bg-cyan-500 group-hover:bg-cyan-400 transition-colors duration-300" />
-                    <div className="relative flex items-center gap-2 bg-black/90 px-5 py-1.5 rounded-full z-10">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-colors" onClick={handleSave} title="Save (Ctrl+S)">
+            <div className="flex items-center justify-center px-4 py-4 bg-transparent gap-4 shrink-0 transition-all sticky top-0 z-40">
+                <div className="relative group rounded-full p-px overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.1)] hover:shadow-[0_0_35px_rgba(6,182,212,0.3)] transition-all duration-500">
+                    <div className="absolute inset-0 bg-linear-to-r from-cyan-500/20 via-cyan-400/40 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative flex items-center gap-2 bg-[#050505]/80 backdrop-blur-xl px-6 py-2 rounded-full z-10 border border-cyan-500/30">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-cyan-500/10 rounded-full text-zinc-400 hover:text-cyan-400 transition-all"
+                            onClick={handleSave}
+                            title="Save (Ctrl+S)"
+                        >
                             <Save className="h-4 w-4" />
                         </Button>
-                        <div className="w-px h-4 bg-cyan-500/30 mx-1" />
-                        <Button variant="ghost" className="h-8 px-3 gap-2 hover:bg-zinc-800 rounded-full text-zinc-300 hover:text-white text-sm font-medium transition-colors" onClick={addCell}>
+                        <div className="w-px h-4 bg-cyan-500/20 mx-1" />
+                        <Button
+                            variant="ghost"
+                            className="h-8 px-4 gap-2 hover:bg-linear-to-r hover:from-cyan-500/20 hover:to-blue-500/20 rounded-full text-zinc-300 hover:text-cyan-400 text-sm font-bold transition-all border border-transparent hover:border-cyan-500/40"
+                            onClick={addCell}
+                        >
                             <Plus className="h-4 w-4" /> Add Cell
                         </Button>
                     </div>
                 </div>
             </div>
 
-            {/* Notebook Area - Full Screen */}
-            <div className="flex-1 overflow-y-auto w-full flex flex-col items-center scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+            {/* Notebook Area - Full Surface */}
+            <div className="flex-1 overflow-y-auto w-full flex flex-col scrollbar-none z-10 relative">
                 <div
-                    className="w-full h-full min-h-[calc(100vh-60px)] bg-black flex flex-col p-4 md:p-8 transition-transform duration-200 ease-out"
+                    className="w-full h-full min-h-[calc(100vh-60px)] bg-transparent flex flex-col p-4 md:p-12 transition-transform duration-200 ease-out"
                     style={{
                         transform: `scale(${zoomLevel})`,
-                        transformOrigin: 'top center',
-                        width: `${100 / zoomLevel}%` // Compensate width if scaling down/up to keep centered? Actually just scale is fine if we accept it shrinks.
-                        // Better: Apply scale to the inner content wrapper so it stays centered.
+                        transformOrigin: 'top left',
                     }}
                 >
-                    <div className="w-full max-w-[1800px] mx-auto h-full flex flex-col">
+                    <div className="w-full h-full flex flex-col">
                         {/* Title Area */}
-                        <div className="mb-8 border-b border-cyan-500/20 pb-4">
+                        <div className="mb-12 border-b border-cyan-500/10 pb-6 relative group">
                             <input
                                 type="text"
                                 value={note.title}
                                 onChange={(e) => onUpdate({ ...note, title: e.target.value })}
-                                className="text-5xl font-bold bg-transparent border-none outline-none w-full text-white placeholder:text-zinc-800 transition-all"
+                                className="text-6xl font-black bg-transparent border-none outline-none w-full text-white placeholder:text-zinc-900 transition-all drop-shadow-[0_0_12px_rgba(34,211,238,0.4)] focus:drop-shadow-[0_0_18px_rgba(34,211,238,1)] tracking-tighter"
                                 placeholder="Untitled Note"
                             />
+                            <div className="absolute bottom-0 left-0 h-0.5 bg-cyan-500/50 w-0 group-focus-within:w-full transition-all duration-700" />
                         </div>
 
                         {/* Cells */}

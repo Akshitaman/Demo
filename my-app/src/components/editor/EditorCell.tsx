@@ -8,9 +8,9 @@ import 'katex/dist/katex.min.css';
 import { Cell } from '@/store/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Sparkles, AlertCircle, Trash } from 'lucide-react';
+import { Sparkles, AlertCircle, Trash, Bold, Italic, Code } from 'lucide-react';
 import { LintService, LintError } from '@/lib/lint-service';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface EditorCellProps {
     cell: Cell;
@@ -24,6 +24,7 @@ interface EditorCellProps {
 export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, isActive }: EditorCellProps) {
     const [isEditing, setIsEditing] = useState(true); // Default to true
     const [lintErrors, setLintErrors] = useState<LintError[]>([]);
+    const [selection, setSelection] = useState<{ start: number, end: number, top: number, left: number } | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Auto-resize textarea
@@ -73,14 +74,34 @@ export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, i
         updateCursorPosition();
     };
 
+    const handleSelect = () => {
+        if (!textareaRef.current) return;
+        const start = textareaRef.current.selectionStart;
+        const end = textareaRef.current.selectionEnd;
+
+        if (start !== end) {
+            // Calculate position for toolbar
+            const rect = textareaRef.current.getBoundingClientRect();
+            // Simple approximation for floating toolbar position
+            setSelection({ start, end, top: rect.top - 50, left: rect.left + 20 });
+        } else {
+            setSelection(null);
+        }
+    };
+
     return (
-        <div
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className={cn(
-                "group relative mb-4 rounded-lg border bg-zinc-950 transition-all duration-200",
-                "border-zinc-800 hover:border-zinc-700",
+                "group relative mb-6 rounded-3xl border transition-all duration-500 overflow-hidden",
+                "bg-[#050505]/60 backdrop-blur-xl border-cyan-500/20 font-sans",
                 // Focus state
-                "focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500 focus-within:shadow-lg focus-within:shadow-cyan-500/10",
-                isActive && "border-cyan-500 ring-1 ring-cyan-500 shadow-lg shadow-cyan-500/10"
+                "focus-within:border-cyan-400/50 focus-within:shadow-[0_0_30px_rgba(34,211,238,0.15)]",
+                isActive && "border-cyan-400 ring-1 ring-cyan-400/20 shadow-[0_0_30px_rgba(34,211,238,0.2)]"
             )}
             onClick={() => {
                 if (onSelect) onSelect();
@@ -100,9 +121,10 @@ export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, i
                             ref={textareaRef}
                             value={cell.content}
                             onChange={handleChange}
-                            onKeyUp={updateCursorPosition}
-                            onClick={updateCursorPosition}
-                            className="w-full bg-transparent resize-none outline-none font-mono text-lg leading-relaxed min-h-[1.5em] overflow-hidden"
+                            onKeyUp={() => { updateCursorPosition(); handleSelect(); }}
+                            onClick={() => { updateCursorPosition(); handleSelect(); }}
+                            onSelect={handleSelect}
+                            className="w-full bg-transparent resize-none outline-none font-medium text-xl leading-relaxed min-h-[1.5em] overflow-hidden text-zinc-100 placeholder:text-zinc-900 transition-all"
                             placeholder="Start writing..."
                             autoFocus
                         />
@@ -146,18 +168,52 @@ export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, i
                 )}
             </div>
 
+            {/* Floating Toolbar */}
+            <AnimatePresence>
+                {selection && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                        className="fixed z-50 flex items-center gap-1 bg-[#050505]/90 backdrop-blur-xl border border-cyan-500/30 p-1 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(34,211,238,0.1)]"
+                        style={{ top: selection.top, left: selection.left }}
+                    >
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-cyan-500/10 text-zinc-400 hover:text-cyan-400 rounded-full transition-all">
+                            <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-cyan-500/10 text-zinc-400 hover:text-cyan-400 rounded-full transition-all">
+                            <Italic className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-cyan-500/10 text-zinc-400 hover:text-cyan-400 rounded-full transition-all">
+                            <Code className="h-4 w-4" />
+                        </Button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* AI Hint */}
             {/* Cell Actions */}
-            <div className="absolute right-0 top-0 flex gap-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900/50 backdrop-blur-sm rounded-bl-lg border-l border-b border-zinc-800">
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-red-400 hover:bg-red-900/20 transition-colors" onClick={onDelete} title="Delete Cell">
-                    <Trash className="h-3.5 w-3.5" />
+            <div className="absolute right-3 top-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
+                    onClick={onDelete}
+                    title="Delete Cell"
+                >
+                    <Trash className="h-4 w-4" />
                 </Button>
                 {isEditing && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20 transition-colors" title="AI Assist">
-                        <Sparkles className="h-3.5 w-3.5" />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-cyan-500 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-full transition-all"
+                        title="AI Assist"
+                    >
+                        <Sparkles className="h-4 w-4" />
                     </Button>
                 )}
             </div>
-        </div>
+        </motion.div>
     );
 }
