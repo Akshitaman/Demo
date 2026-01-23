@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
@@ -12,6 +12,10 @@ import { Sparkles, AlertCircle, Trash, Bold, Italic, Code } from 'lucide-react';
 import { LintService, LintError } from '@/lib/lint-service';
 import { motion, AnimatePresence } from 'framer-motion';
 
+export interface EditorCellHandle {
+    focus: () => void;
+}
+
 interface EditorCellProps {
     cell: Cell;
     onChange: (content: string) => void;
@@ -21,11 +25,23 @@ interface EditorCellProps {
     isActive?: boolean;
 }
 
-export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, isActive }: EditorCellProps) {
+export const EditorCell = forwardRef<EditorCellHandle, EditorCellProps>(({ cell, onChange, onDelete, onSelect, onCursorMove, isActive }, ref) => {
     const [isEditing, setIsEditing] = useState(true); // Default to true
     const [lintErrors, setLintErrors] = useState<LintError[]>([]);
     const [selection, setSelection] = useState<{ start: number, end: number, top: number, left: number } | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Mirror ref for calculating cursor position
+    const mirrorRef = useRef<HTMLDivElement>(null);
+
+    useImperativeHandle(ref, () => ({
+        focus: () => {
+            setIsEditing(true);
+            setTimeout(() => {
+                textareaRef.current?.focus();
+            }, 0);
+        }
+    }));
 
     // Auto-resize textarea
     useEffect(() => {
@@ -34,6 +50,66 @@ export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, i
             textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
         }
     }, [cell.content, isEditing]);
+
+    // Scroll to caret function
+    const scrollToCaret = () => {
+        if (!textareaRef.current || !mirrorRef.current) return;
+
+        const textarea = textareaRef.current;
+        const mirror = mirrorRef.current;
+
+        // Copy styles
+        const computed = window.getComputedStyle(textarea);
+        mirror.style.width = computed.width;
+        mirror.style.font = computed.font;
+        mirror.style.padding = computed.padding;
+        mirror.style.lineHeight = computed.lineHeight;
+        mirror.style.whiteSpace = 'pre-wrap';
+        mirror.style.wordWrap = 'break-word';
+
+        // Set content up to caret
+        const value = textarea.value;
+        const selectionStart = textarea.selectionStart;
+        const textBeforeCaret = value.substring(0, selectionStart);
+
+        // Add a span to mark caret position
+        mirror.innerHTML = textBeforeCaret.replace(/\n/g, '<br/>') + '<span id="caret">|</span>';
+
+        const caret = mirror.querySelector('#caret') as HTMLElement;
+        if (caret) {
+            const caretTop = caret.offsetTop;
+            const textareaTop = textarea.getBoundingClientRect().top;
+
+            // Find scrollable parent (EditorCanvas container)
+            // We can find the closest scrollable parent or just use the window/document relative coords
+            // In this app, the scroll container is likely the parent div in EditorCanvas
+
+            const scrollContainer = textarea.closest('.overflow-y-auto') as HTMLElement;
+            if (scrollContainer) {
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const absoluteCaretTop = textarea.offsetTop + caretTop;
+
+                // Add some padding/context
+                const BUFFER = 50;
+
+                // If caret is below viewport
+                if (caret.getBoundingClientRect().bottom > containerRect.bottom - BUFFER) {
+                    caret.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                // Logic to scroll parent if needed
+                const relativeTop = textarea.offsetTop + caretTop;
+                const currentScroll = scrollContainer.scrollTop;
+                const viewportHeight = scrollContainer.clientHeight;
+
+                if (relativeTop > currentScroll + viewportHeight - BUFFER) {
+                    scrollContainer.scrollTo({
+                        top: relativeTop - viewportHeight + BUFFER + 50, // +50 for extra breathing room
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }
+    };
 
     // Run linting when editing
     useEffect(() => {
@@ -72,6 +148,8 @@ export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, i
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         onChange(e.target.value);
         updateCursorPosition();
+        // We don't scroll on every char change to avoid jitter, but we could if needed.
+        // The user specifically asked for "Enter".
     };
 
     const handleSelect = () => {
@@ -116,15 +194,28 @@ export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, i
                 }}
             >
                 {isEditing ? (
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative">
+                        {/* Mirror Div for scrolling calculations - Hidden but rendered */}
+                        <div
+                            ref={mirrorRef}
+                            className="absolute top-0 left-0 -z-50 invisible pointer-events-none whitespace-pre-wrap break-words w-full"
+                            aria-hidden="true"
+                        />
+
                         <textarea
                             ref={textareaRef}
                             value={cell.content}
                             onChange={handleChange}
-                            onKeyUp={() => { updateCursorPosition(); handleSelect(); }}
+                            onKeyUp={(e) => {
+                                updateCursorPosition();
+                                handleSelect();
+                                if (e.key === 'Enter') {
+                                    scrollToCaret();
+                                }
+                            }}
                             onClick={() => { updateCursorPosition(); handleSelect(); }}
                             onSelect={handleSelect}
-                            className="w-full bg-transparent resize-none outline-none font-medium text-xl leading-relaxed min-h-[1.5em] overflow-hidden text-zinc-100 placeholder:text-zinc-900 transition-all"
+                            className="w-full bg-transparent resize-none outline-none font-medium text-xl leading-relaxed min-h-[1.5em] overflow-hidden text-zinc-100 placeholder:text-zinc-400 transition-all"
                             placeholder="Start writing..."
                             autoFocus
                         />
@@ -216,4 +307,6 @@ export function EditorCell({ cell, onChange, onDelete, onSelect, onCursorMove, i
             </div>
         </motion.div>
     );
-}
+});
+
+EditorCell.displayName = 'EditorCell';

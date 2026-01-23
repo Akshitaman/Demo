@@ -118,7 +118,7 @@ export function AIChat({ content }: AIChatProps) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Query Klaer AI..."
-            className="w-full bg-[#0a0a0a]/80 backdrop-blur-3xl border border-cyan-500/30 rounded-[24px] px-6 py-4 text-sm outline-none focus:border-cyan-400/60 focus:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all placeholder:text-zinc-700 font-medium text-white shadow-inner"
+            className="w-full bg-[#0a0a0a]/80 backdrop-blur-3xl border border-cyan-500/30 rounded-[24px] px-6 py-4 text-sm outline-none focus:border-cyan-400/60 focus:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all placeholder:text-zinc-400 font-medium text-white shadow-inner"
           />
           <button
             onClick={handleSend}

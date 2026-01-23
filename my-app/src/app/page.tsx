@@ -370,7 +370,7 @@ function HomeContent() {
                 </AnimatePresence>
               </div>
 
-              <div className="relative group" ref={sortMenuRef}>
+              <div className="relative group flex items-center gap-2" ref={sortMenuRef}>
                 <div className="absolute inset-0 bg-cyan-500/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 -z-10" />
                 <AnimatePresence>
                   {!isSortMenuOpen && (
@@ -577,12 +577,12 @@ function HomeContent() {
                       <h3 className="text-lg font-bold text-zinc-400 mb-2">No folders yet</h3>
                       <p className="text-sm text-zinc-500 max-w-xs">Create a folder to organize your notes and keep things tidy.</p>
                       <Button
-                         variant="ghost" 
-                         onClick={() => setIsCreatingFolder(true)}
-                         className="mt-6 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                        variant="ghost"
+                        onClick={() => setIsCreatingFolder(true)}
+                        className="mt-6 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
                       >
-                       <Plus className="w-4 h-4 mr-2" />
-                       Create Folder
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Folder
                       </Button>
                     </motion.div>
                   ) : (
@@ -655,47 +655,51 @@ function HomeContent() {
                       <FileText className="w-10 h-10 text-zinc-600" />
                     </div>
                     <h3 className="text-lg font-bold text-zinc-400 mb-2">
-                       {debouncedSearchQuery ? 'No matching notes' : 'No notes yet'}
+                      {debouncedSearchQuery ? 'No matching notes' : 'No notes yet'}
                     </h3>
                     <p className="text-sm text-zinc-500 max-w-xs">
-                       {debouncedSearchQuery ? 'Try adjusting your search query.' : 'Create a new note to get started with your ideas.'}
+                      {debouncedSearchQuery ? 'Try adjusting your search query.' : 'Create a new note to get started with your ideas.'}
                     </p>
                     {!debouncedSearchQuery && (
                       <Button
                         variant="ghost"
                         onClick={async () => {
-                           const newNote = await createNote("Untitled Note", folderId || undefined);
-                           if (newNote) router.push(`/notes/${newNote.id}`);
+                          const newNote = await createNote("Untitled Note", folderId || undefined);
+                          if (newNote) router.push(`/notes/${newNote.id}`);
                         }}
                         className="mt-6 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
                       >
-                         <Plus className="w-4 h-4 mr-2" />
-                         Create Note
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Note
                       </Button>
                     )}
                   </motion.div>
                 ) : (
                   filteredNotes.map(note => (
-                    <motion.div
-                      layout
-                      key={note.id}
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.8, opacity: 0 }}
-                      onClick={() => handleOpenNote(note.id)}
-                      className={cn(
-                        "relative group rounded-[32px] overflow-hidden cursor-pointer transition-all hover:scale-[1.02] duration-500 bg-[#050505] border-[1.5px] border-cyan-500 shadow-[0_0_25px_rgba(6,182,212,0.25)] hover:shadow-[0_0_35px_rgba(6,182,212,0.4)] aspect-3/4 flex flex-col",
-                        hoveredDeleteId === note.id && "border-red-500/50 shadow-[0_0_35px_rgba(239,68,68,0.3)] animate-pulse"
-                      )}
-                    >
-                      <div className="flex-1 w-full p-6 flex flex-col items-center justify-center relative">
-                        <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div key={note.id} className="flex flex-col gap-3 group">
+                      <motion.div
+                        layout
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        onClick={() => handleOpenNote(note.id)}
+                        className={cn(
+                          "relative rounded-[24px] overflow-hidden cursor-pointer transition-all hover:scale-[1.02] duration-500 bg-[#050505] border-[1.5px] border-cyan-500/30 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] hover:border-cyan-500 hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] aspect-3/4 flex flex-col",
+                          hoveredDeleteId === note.id && "border-red-500/50 shadow-[0_0_35px_rgba(239,68,68,0.3)] animate-pulse"
+                        )}
+                      >
+                        {/* Dropdown Action Menu */}
+                        <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"><MoreVertical className="h-5 w-5" /></Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 bg-black/40 backdrop-blur text-white/70 hover:text-white hover:bg-white/10 rounded-full">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyNote(note, folderId || undefined); }}><Copy className="h-4 w-4 mr-2" /> Duplicate</DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyNote(note, folderId || undefined); }}>
+                                <Copy className="h-4 w-4 mr-2" /> Duplicate
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onMouseEnter={() => setHoveredDeleteId(note.id)}
                                 onMouseLeave={() => setHoveredDeleteId(null)}
@@ -707,18 +711,34 @@ function HomeContent() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                        <div className="flex-1 flex items-center justify-center w-full">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full" />
-                            <FileText className="relative h-24 w-24 text-cyan-400 stroke-[0.8] drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+
+                        {/* Content Preview */}
+                        <div className="flex-1 p-5 overflow-hidden relative">
+                          <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent opacity-50 pointer-events-none" />
+
+                          {/* Text Preview */}
+                          <div className="relative z-10 text-zinc-400/80 text-[11px] leading-relaxed font-mono whitespace-pre-wrap select-none opacity-80 break-words">
+                            {note.cells?.map(c => c.content).join('\n').slice(0, 500) || (
+                              <span className="text-zinc-400 italic flex flex-col items-center justify-center h-40 gap-2">
+                                <FileText className="h-8 w-8 opacity-70" />
+                                No content
+                              </span>
+                            )}
                           </div>
+
+                          {/* Bottom Fade Overlay */}
+                          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent pointer-events-none z-10" />
                         </div>
-                        <div className="w-full text-center mt-4">
-                          <h3 className="font-bold text-xl text-white tracking-tight mb-1 truncate px-2">{note.title || 'Untitled Project'}</h3>
-                          <p className="text-xs text-zinc-500 font-medium">Last edited {format(note.createdAt, 'd MMM, yyyy')}</p>
-                        </div>
+                      </motion.div>
+
+                      {/* Metadata Below Card */}
+                      <div className="text-center px-2">
+                        <h3 className="font-black text-lg text-white truncate drop-shadow-md">{note.title || 'Untitled Note'}</h3>
+                        <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-widest mt-1">
+                          {format(note.createdAt, 'MMM d, yyyy')}
+                        </p>
                       </div>
-                    </motion.div>
+                    </div>
                   ))
                 )
               )}
@@ -780,7 +800,7 @@ function HomeContent() {
                       setDeleteRequest(null);
                       setHoveredDeleteId(null);
                     }}
-                    className="flex-1 relative group h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl overflow-hidden transition-all active:scale-95"
+                    className="flex-1 relative group h-12 bg-red-600 hover:bg-red-500 text-white font-bold rounded-2xl overflow-hidden transition-all active:scale-95"
                   >
                     <div className="absolute inset-0 shimmer-border bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="relative z-10">Confirm Delete</span>

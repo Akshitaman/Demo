@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Note, Cell } from '@/store/types';
-import { EditorCell } from './EditorCell';
+import { EditorCell, EditorCellHandle } from './EditorCell';
 import { Button } from '@/components/ui/button';
 import { Save, Plus } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,6 +17,7 @@ interface EditorCanvasProps {
 
 export function EditorCanvas({ note, onUpdate, zoomLevel, onCursorMove }: EditorCanvasProps) {
     const bottomRef = useRef<HTMLDivElement>(null);
+    const firstCellRef = useRef<EditorCellHandle>(null);
 
     // Ensure there is at least one cell on load
     useEffect(() => {
@@ -69,7 +70,6 @@ export function EditorCanvas({ note, onUpdate, zoomLevel, onCursorMove }: Editor
         <div className="flex flex-col h-full w-full bg-[#050505] text-white relative overflow-hidden transition-all duration-300">
 
             {/* Toolbar - Floating */}
-            {/* Toolbar - Floating */}
             <div className="flex items-center justify-center px-4 py-4 bg-transparent gap-4 shrink-0 transition-all sticky top-0 z-40">
                 <div className="relative group rounded-full p-px overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.1)] hover:shadow-[0_0_35px_rgba(6,182,212,0.3)] transition-all duration-500">
                     <div className="absolute inset-0 bg-linear-to-r from-cyan-500/20 via-cyan-400/40 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -111,6 +111,12 @@ export function EditorCanvas({ note, onUpdate, zoomLevel, onCursorMove }: Editor
                                 type="text"
                                 value={note.title}
                                 onChange={(e) => onUpdate({ ...note, title: e.target.value })}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        firstCellRef.current?.focus();
+                                    }
+                                }}
                                 className="text-6xl font-black bg-transparent border-none outline-none w-full text-white placeholder:text-zinc-900 transition-all drop-shadow-[0_0_12px_rgba(34,211,238,0.4)] focus:drop-shadow-[0_0_18px_rgba(34,211,238,1)] tracking-tighter"
                                 placeholder="Untitled Note"
                             />
@@ -119,9 +125,10 @@ export function EditorCanvas({ note, onUpdate, zoomLevel, onCursorMove }: Editor
 
                         {/* Cells */}
                         <div className="space-y-4 flex-1">
-                            {note.cells && note.cells.map((cell) => (
+                            {note.cells && note.cells.map((cell, index) => (
                                 <EditorCell
                                     key={cell.id}
+                                    ref={index === 0 ? firstCellRef : null}
                                     cell={cell}
                                     onChange={(content) => handleCellChange(cell.id, content)}
                                     onDelete={() => handleDeleteCell(cell.id)}

@@ -50,9 +50,9 @@ const TypewriterText = ({ text, className, delay = 0 }: { text: string, classNam
             exit: {
                 opacity: 0,
                 transition: {
-                    staggerChildren: 0.1, // Slower stagger for smoother exit
+                    staggerChildren: 0.1,
                     staggerDirection: -1,
-                    delayChildren: 0.2 // Wait a bit before starting to delete
+                    delayChildren: 0.2
                 }
             }
         }}
@@ -70,7 +70,7 @@ const TypewriterText = ({ text, className, delay = 0 }: { text: string, classNam
                     exit: {
                         opacity: 0,
                         scale: 0.5,
-                        transition: { duration: 0.3 } // Slower individual char exit
+                        transition: { duration: 0.3 }
                     }
                 }}
             >
@@ -82,12 +82,11 @@ const TypewriterText = ({ text, className, delay = 0 }: { text: string, classNam
 
 function SidebarContent() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isCollapsed, setIsCollapsed] = useState(true); // Default Closed
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeAITool, setActiveAITool] = useState<AIToolType>(null);
     const [isMobile, setIsMobile] = useState(false);
 
-    // Combined hooks
     const { notes, createNote, copyNote, deleteNote } = useNotes();
     const { folders, createFolder, deleteFolder, updateFolder } = useFolders();
     const { theme, setTheme } = useTheme();
@@ -99,68 +98,83 @@ function SidebarContent() {
     const activeNoteId = params?.id as string;
     const [noteClipboard, setNoteClipboard] = useState<Note | null>(null);
 
-    // Auto-collapse on mobile - Handle initial state
     useEffect(() => {
         const handleResize = () => {
             const mobile = window.innerWidth < 768;
             setIsMobile(mobile);
-
             if (mobile) {
-                setIsCollapsed(true); // Default to collapsed on mobile
+                setIsCollapsed(true);
             } else {
-                setIsMobileMenuOpen(false); // Reset mobile state on desktop
+                setIsMobileMenuOpen(false);
             }
         };
 
-        handleResize(); // Init
+        handleResize();
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-
-    // Get active note content for AI context
     const { note: activeNote } = useNote(activeNoteId || '');
 
-    // Get raw text content from the note for AI processing
     const getNoteContent = () => {
         if (!activeNote) return "";
         return activeNote.cells.map((c: Cell) => c.content).join('\n\n');
     };
-
 
     const toggleAITool = (tool: AIToolType) => {
         if (activeAITool === tool) {
             setActiveAITool(null);
         } else {
             setActiveAITool(tool);
-            // On mobile, if we open AI tool, we might want to close the sidebar or keep it?
-            // Let's keep it simple for now.
         }
     };
 
     const handleOpenNote = (noteId: string) => {
-        // Fix: Route correctly to /notes/ instead of /note/
         router.push(`/notes/${noteId}`);
-        // On mobile, close sidebar after navigation
         if (window.innerWidth < 768) {
             setIsMobileMenuOpen(false);
         }
     };
 
-    // Removed auto-close useEffect to allow AI tools to stay open even if no note is selected initially (though they need content).
-    // Can render a placeholder in the panel if no note is selected.
-
+    // --- ENHANCED ANIMATION VARIANTS ---
     const sidebarVariants = {
-        collapsed: { width: "4rem" },
-        expanded: { width: "16rem" },
-        mobileOpen: { x: 0, width: "16rem" },
-        mobileClosed: { x: "-100%", width: "16rem" }
+        collapsed: {
+            width: "5rem",
+            transition: { type: "spring" as const, stiffness: 300, damping: 30 }
+        },
+        expanded: {
+            width: "16rem",
+            transition: { type: "spring" as const, stiffness: 300, damping: 30 }
+        },
+        mobileOpen: {
+            x: 0,
+            width: "16rem",
+            transition: { type: "spring" as const, stiffness: 300, damping: 30 }
+        },
+        mobileClosed: {
+            x: "-100%",
+            width: "16rem",
+            transition: { type: "spring" as const, stiffness: 300, damping: 30 }
+        }
     };
 
+    const labelVariants = {
+        visible: {
+            opacity: 1,
+            x: 0,
+            display: "inline-block",
+            transition: { delay: 0.1, duration: 0.2 }
+        },
+        hidden: {
+            opacity: 0,
+            x: -10,
+            transitionEnd: { display: "none" },
+            transition: { duration: 0.1 }
+        }
+    };
 
     return (
         <>
-            {/* Mobile Toggle Button (Visible only on mobile when sidebar is closed) */}
             <div className="md:hidden fixed top-3 left-3 z-50">
                 {!isMobileMenuOpen && (
                     <motion.div
@@ -181,7 +195,6 @@ function SidebarContent() {
                 )}
             </div>
 
-            {/* Mobile Backdrop */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
@@ -198,160 +211,152 @@ function SidebarContent() {
                 initial={false}
                 animate={isMobile ? (isMobileMenuOpen ? "mobileOpen" : "mobileClosed") : (isCollapsed ? "collapsed" : "expanded")}
                 variants={sidebarVariants}
-                // Swift spring transition
-                transition={{ type: "spring", stiffness: 300, damping: 30 }} // Slightly gentler spring for sidebar
                 className={cn(
-                    "flex flex-col z-50 overflow-hidden bg-background border-r border-zinc-200 dark:border-cyan-500/50 shadow-none", // Seamless solid background
-                    // Mobile styles: fixed full height
+                    "flex flex-col z-50 overflow-hidden bg-background border-r border-zinc-200 dark:border-cyan-500/50 shadow-none",
                     "fixed inset-y-0 left-0 h-full",
-                    // Desktop styles: relative
                     "md:relative md:translate-x-0 md:shadow-none"
                 )}
             >
                 {/* Header */}
-                <div className="p-4 border-b border-zinc-200 dark:border-cyan-500/50 flex items-center justify-between shrink-0 h-16">
-                    <AnimatePresence mode="popLayout">
-                        {(!isCollapsed || isMobile) && (
+                <div className={cn("flex items-center shrink-0 h-16 transition-colors duration-300", isCollapsed && !isMobile ? "justify-center px-0" : "justify-between px-4 border-b border-zinc-200 dark:border-cyan-500/50")}>
+                    <AnimatePresence mode="wait">
+                        {(!isCollapsed || isMobile) ? (
                             <motion.div
+                                key="full-logo"
                                 className="font-bold text-lg tracking-tight whitespace-nowrap flex overflow-hidden"
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                                transition={{ duration: 0.4, ease: "easeOut" }}
+                                exit={{ opacity: 0, x: -10 }}
+                                transition={{ duration: 0.2 }}
                             >
-                                <span className="text-zinc-900 dark:text-zinc-100">Klaer </span>
-                                <span className="text-blue-600 dark:text-cyan-400">Notebook</span>
+                                <span className="text-zinc-900 dark:text-zinc-100">Klaer</span>
+                                <span className="text-blue-600 dark:text-cyan-400 pl-1">Notebook</span>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="mini-logo"
+                                className="font-bold text-xl text-blue-600 dark:text-cyan-400"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                K
                             </motion.div>
                         )}
                     </AnimatePresence>
 
-                    {isMobile ? (
-                        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)} className="shrink-0">
-                            <X className="h-5 w-5" />
-                        </Button>
-                    ) : (
-                        <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)} className="shrink-0">
-                            <FileText className="h-5 w-5" />
+                    {(!isCollapsed || isMobile) && (
+                        <Button variant="ghost" size="icon" onClick={() => isMobile ? setIsMobileMenuOpen(false) : setIsCollapsed(!isCollapsed)} className="shrink-0 h-8 w-8 text-zinc-400">
+                            {isMobile ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                         </Button>
                     )}
                 </div>
 
+                {isCollapsed && !isMobile && (
+                    <div className="w-full flex justify-center pb-4 border-b border-zinc-200 dark:border-cyan-500/50 mb-2">
+                        <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(false)} className="h-8 w-8 text-zinc-400">
+                            <Menu className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
+
+
                 {/* Navigation */}
-                <div className="flex-1 overflow-y-auto py-4 space-y-2">
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 }}
-                    >
+                <div className="flex-1 overflow-y-auto py-4 space-y-2 px-2">
+                    <motion.div>
                         <Link href="/">
                             <Button
                                 variant={!searchParams.get('folder') && !searchParams.get('view') ? "secondary" : "ghost"}
                                 className={cn(
-                                    "w-full justify-start h-10 px-4 transition-all duration-200",
-                                    isCollapsed && !isMobile ? "justify-center px-0" : "",
+                                    "w-full h-10 relative group overflow-hidden transition-all duration-300",
+                                    isCollapsed && !isMobile ? "justify-center px-0" : "justify-start px-4",
                                     !searchParams.get('folder') && !searchParams.get('view') ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground hover:bg-accent/50"
                                 )}
                                 onClick={() => isMobile && setIsMobileMenuOpen(false)}
+                                title={isCollapsed ? "Recent Files" : undefined}
                             >
-                                <motion.div layout className="flex items-center">
-                                    <Clock className={cn("h-5 w-5 shrink-0", !searchParams.get('folder') && !searchParams.get('view') ? "text-primary" : "text-muted-foreground")} />
-                                </motion.div>
-                                <AnimatePresence>
-                                    {(!isCollapsed || isMobile) && (
-                                        <motion.div
-                                            key="recent-text"
-                                            className="ml-3 font-medium overflow-hidden whitespace-nowrap"
-                                            initial={{ opacity: 0, width: 0 }}
-                                            animate={{ opacity: 1, width: "auto" }}
-                                            exit={{ opacity: 0, width: 0, transition: { duration: 0.3 } }}
-                                        >
-                                            Recent Files
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                <Clock className={cn("h-5 w-5 shrink-0 transition-transform duration-300", isCollapsed ? "mr-0" : "mr-3", !searchParams.get('folder') && !searchParams.get('view') ? "text-primary" : "text-muted-foreground")} />
+
+                                <motion.span
+                                    variants={labelVariants}
+                                    animate={(!isCollapsed || isMobile) ? "visible" : "hidden"}
+                                    className="whitespace-nowrap origin-left"
+                                >
+                                    Recent Files
+                                </motion.span>
                             </Button>
                         </Link>
                     </motion.div>
 
                     <nav className="space-y-1">
-                        {/* Notes List removed as per user request */}
                     </nav>
 
                     {/* Folders Link */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="group relative"
-                    >
+                    <motion.div className="group relative">
                         <Button
                             variant={searchParams.get('view') === 'folders' || searchParams.get('folder') ? "secondary" : "ghost"}
                             className={cn(
-                                "w-full justify-start h-10 px-4 transition-all duration-200",
-                                isCollapsed && !isMobile ? "justify-center px-0" : "",
+                                "w-full h-10 relative group overflow-hidden transition-all duration-300",
+                                isCollapsed && !isMobile ? "justify-center px-0" : "justify-start px-4",
                                 (searchParams.get('view') === 'folders' || searchParams.get('folder')) ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground hover:bg-accent/50"
                             )}
                             onClick={() => {
                                 router.push('/?view=folders');
                                 if (isMobile) setIsMobileMenuOpen(false);
                             }}
+                            title={isCollapsed ? "Folders" : undefined}
                         >
-                            <motion.div layout className="flex items-center">
-                                <FolderIcon className={cn("h-5 w-5 shrink-0", (searchParams.get('view') === 'folders' || searchParams.get('folder')) ? "text-primary" : "text-muted-foreground")} />
-                            </motion.div>
-                            <AnimatePresence>
-                                {(!isCollapsed || isMobile) && (
-                                    <motion.div
-                                        key="folders-text"
-                                        className="ml-3 font-medium overflow-hidden whitespace-nowrap"
-                                        initial={{ opacity: 0, width: 0 }}
-                                        animate={{ opacity: 1, width: "auto" }}
-                                        exit={{ opacity: 0, width: 0, transition: { duration: 0.3 } }}
-                                    >
-                                        Folders
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            <FolderIcon className={cn("h-5 w-5 shrink-0 transition-transform duration-300", isCollapsed ? "mr-0" : "mr-3", (searchParams.get('view') === 'folders' || searchParams.get('folder')) ? "text-primary" : "text-muted-foreground")} />
+
+                            <motion.span
+                                variants={labelVariants}
+                                animate={(!isCollapsed || isMobile) ? "visible" : "hidden"}
+                                className="whitespace-nowrap origin-left"
+                            >
+                                Folders
+                            </motion.span>
                         </Button>
                     </motion.div>
-
-                    {/* AI Tools Section Removed as per user request */}
                 </div>
 
                 {/* User / Engagement */}
-                <div
-                    className="p-6 border-t border-border cursor-pointer hover:bg-muted/30 transition-colors"
-                >
-                    <div className="flex items-center justify-between">
+                <div className={cn(
+                    "border-t border-border cursor-pointer hover:bg-muted/30 transition-all duration-300",
+                    isCollapsed && !isMobile ? "p-4" : "p-6"
+                )}>
+                    <div className={cn("flex items-center", isCollapsed && !isMobile ? "justify-center" : "justify-between")}>
                         <div
-                            className="flex items-center gap-3 flex-1"
+                            className={cn("flex items-center gap-3", isCollapsed && !isMobile ? "justify-center w-full" : "flex-1")}
                             onClick={() => {
                                 router.push('/profile');
                                 if (isMobile) setIsMobileMenuOpen(false);
                             }}
+                            title={isCollapsed ? "User Profile" : undefined}
                         >
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shrink-0 shadow-sm">
                                 U
                             </div>
-                            {(!isCollapsed || isMobile) && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="flex-1 overflow-hidden"
-                                >
-                                    <p className="text-sm font-medium truncate">User</p>
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                        🔥 5 Day Streak
-                                    </p>
-                                </motion.div>
-                            )}
+
+                            <motion.div
+                                variants={labelVariants}
+                                animate={(!isCollapsed || isMobile) ? "visible" : "hidden"}
+                                className="flex-1 overflow-hidden"
+                            >
+                                <p className="text-sm font-medium truncate">User</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    🔥 5 Day Streak
+                                </p>
+                            </motion.div>
                         </div>
+
                         {(!isCollapsed || isMobile) && (
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
-                                onClick={() => {
+                                className="h-8 w-8 shrink-0"
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setIsSettingsOpen(true);
                                     if (isMobile) setIsMobileMenuOpen(false);
                                 }}
@@ -364,7 +369,7 @@ function SidebarContent() {
                 </div>
             </motion.aside>
 
-            {/* Settings Modal - Restored */}
+            {/* Settings Modal */}
             {isSettingsOpen && (
                 <div
                     className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
@@ -418,7 +423,6 @@ function SidebarContent() {
                 </div>
             )}
 
-            {/* AI Panel - Restored */}
             <AISidebarPanel
                 isOpen={!!activeAITool}
                 activeTool={activeAITool}
@@ -432,45 +436,8 @@ function SidebarContent() {
 
 export function Sidebar() {
     return (
-        <React.Suspense fallback={<div className="w-16 h-full bg-background border-r border-border" />}>
+        <React.Suspense fallback={<div className="w-20 h-full bg-background border-r border-border" />}>
             <SidebarContent />
         </React.Suspense>
     );
-}
-
-function SidebarItem({
-    icon: Icon,
-    label,
-    isCollapsed,
-    isActive,
-    onClick
-}: {
-    icon: any,
-    label: string,
-    isCollapsed: boolean,
-    isActive?: boolean,
-    onClick?: () => void
-}) {
-    return (
-        <Button
-            variant={isActive ? "secondary" : "ghost"}
-            className={cn(
-                "w-full justify-start h-9 transition-all duration-200",
-                isCollapsed ? "justify-center px-0" : "",
-                isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
-            )}
-            onClick={onClick}
-        >
-            <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "")} />
-            {!isCollapsed && (
-                <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="ml-2 whitespace-nowrap"
-                >
-                    {label}
-                </motion.span>
-            )}
-        </Button>
-    )
 }
